@@ -5,7 +5,7 @@ from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk
 import cv2
 
-# Primera versión.
+# Primera versión!!
 class App:
     def __init__(self, root):
         self.root = root
