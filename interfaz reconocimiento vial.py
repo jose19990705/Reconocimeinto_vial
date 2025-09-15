@@ -5,12 +5,16 @@ from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk
 import cv2
 
-# Primera versión!!
+# Segunda versión de la interfaz gráfica!
 class App:
     def __init__(self, root):
         self.root = root
         self.root.title("Reconocimiento de pavimento")
-        self.root.geometry("900x650")  # ventana más compacta
+        self.root.geometry("1100x750")  # ventana más compacta
+        self.root.resizable(False, False)   # Desactiva redimensionar en X y en Y
+        self.root.maxsize(1100, 750)        # Tamaño máximo = tamaño inicial
+        self.root.minsize(1100, 750)        # Tamaño mínimo = tamaño inicial
+
         self.ruta_video = None
         self.ruta_salida = None
 
@@ -25,6 +29,10 @@ class App:
         #self.video_alto = 225
         self.video_ancho = 600
         self.video_alto = 300
+        
+        self.cant_huecos=0
+        self.cant_grietas=0
+        self.cant_Pcocodrilo=0
         
         
         # Construcción interfaz
@@ -65,60 +73,96 @@ class App:
         frame_inferior.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=10)
 
         # Controles a la izquierda
-        frame_controles = tk.Frame(frame_inferior,bg="Green",bd=4,relief="solid")
-        frame_controles.pack(side=tk.LEFT, fill=tk.X, expand=True,padx=10,pady=2)
-
+        frame_controles = tk.Frame(frame_inferior, bg="Green", bd=4, relief="solid")
+        frame_controles.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=10, pady=2)
+        
+        # --- Subframes dentro de frame_controles ---
+        frame_botones = tk.Frame(frame_controles, bg="Green")
+        frame_botones.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
+        frame_informacion = tk.Frame(frame_controles, bg="Green", bd=3, relief="solid")
+        frame_informacion.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # === Widgets que ya tenías los paso a frame_botones ===
         btn_cargar = tk.Button(
-            frame_controles, text="Cargar video", width=15, command=self.cargar_video,bg="white",bd=3
+            frame_botones, text="Cargar video", width=15, command=self.cargar_video, bg="white", bd=3
         )
-        btn_cargar.grid(row=0, column=2, columnspan=2, pady=5)
-
+        btn_cargar.grid(row=0, column=3, columnspan=2, pady=5)
+        
         btn_guardar = tk.Button(
-            frame_controles, text="Guardar salida", width=15, command=self.guardar_salida,bg="white",bd=3
+            frame_botones, text="Guardar salida", width=15, command=self.guardar_salida, bg="white", bd=3
         )
-        btn_guardar.grid(row=1, column=2, columnspan=2, pady=5)
+        btn_guardar.grid(row=1, column=3, columnspan=2, pady=5)
         
+        tk.Label(frame_botones, text="Min inicio:", bg="white", bd=3).grid(row=2, column=3, sticky="e", pady=2)
+        tk.Entry(frame_botones, textvariable=self.var_min_inicio, width=6, bg="white", bd=3).grid(
+            row=2, column=4, sticky="w"
+        )
         
-        tk.Label(frame_controles, text="Min inicio:",bg="white",bd=3).grid(row=2, column=2, sticky="e",pady=2,)
-        tk.Entry(frame_controles, textvariable=self.var_min_inicio, width=6,bg="white",bd=3).grid(
-            row=2, column=3, sticky="w"
+        tk.Label(frame_botones, text="Min fin:", bg="white", bd=3).grid(row=3, column=3, sticky="e", pady=2)
+        tk.Entry(frame_botones, textvariable=self.var_min_fin, width=6, bg="white", bd=3).grid(
+            row=3, column=4, sticky="w"
         )
-
-        tk.Label(frame_controles, text="Min fin:",bg="white",bd=3).grid(row=3, column=2, sticky="e",pady=2)
-        tk.Entry(frame_controles, textvariable=self.var_min_fin, width=6,bg="white",bd=3).grid(
-            row=3, column=3, sticky="w"
-        )
-
+        
         tk.Checkbutton(
-            frame_controles, text="Todo el video", variable=self.var_todo,bg="white",bd=3
-        ).grid(row=4, column=2, columnspan=2, pady=5)
-
+            frame_botones, text="Todo el video", variable=self.var_todo, bg="white", bd=3
+        ).grid(row=4, column=3, columnspan=2, pady=5)
+        
         btn_iniciar = tk.Button(
-            frame_controles, text="Iniciar inferencia", width=18, command=self.iniciar,bg="white",bd=3
+            frame_botones, text="Iniciar inferencia", width=18, command=self.iniciar, bg="white", bd=3
         )
-        btn_iniciar.grid(row=5, column=2, columnspan=2, pady=2)
-
-        self.label_estado = tk.Label(
-            frame_controles, textvariable=self.var_estado, fg="blue", anchor="center",bg="Green",bd=3
-        )
-        self.label_estado.grid(row=6, column=2, columnspan=2, pady=2, sticky="we",padx=4)
-
+        btn_iniciar.grid(row=5, column=3, columnspan=2, pady=2)
+        
+       
+        
         self.progress = ttk.Progressbar(
-            frame_controles, orient="horizontal", length=300, mode="determinate",
+            frame_botones, orient="horizontal", length=300, mode="determinate",
         )
-        self.progress.grid(row=7, column=2, columnspan=2, pady=7,padx=4)
+        self.progress.grid(row=7, column=3, columnspan=2, pady=2, padx=4)
         
-        #Informacion de conteo!!!
-        # Simplemente colocar los widgets en columnas más altas para moverlos a la derecha
-        tk.Label(frame_controles, text="sdasdad:", bg="white", bd=3).grid(
-            row=3, column=32, pady=2, sticky='e', padx=10  # Alineamos a la derecha en la columna 5
+        # Configurar columnas para centrar en frame_informacion
+        frame_informacion.grid_columnconfigure(0, weight=1)
+        frame_informacion.grid_columnconfigure(1, weight=1)
+        
+        # Título centrado
+        tk.Label(frame_informacion, text="Informacion", bg="white", anchor="center").grid(
+            row=0, column=0, columnspan=2, pady=10, sticky="we"
         )
         
-        tk.Entry(frame_controles, textvariable=self.var_min_fin, width=6, bg="white", bd=3).grid(
-            row=3, column=31, pady=2, sticky='e', padx=10  # Alineamos a la derecha en la columna 6
+        # Fila 1: Cant huecos
+        tk.Label(frame_informacion, text="Cant huecos:", bg="white", bd=3).grid(
+            row=1, column=0, sticky="e", pady=5, padx=10
         )
-
-
+        tk.Entry(frame_informacion, textvariable=self.cant_huecos, width=6, bg="white", bd=3).grid(
+            row=1, column=1, sticky="w", pady=5, padx=10
+        )
+        
+        # Fila 2: Cant grietas
+        tk.Label(frame_informacion, text="Cant grietas:", bg="white", bd=3).grid(
+            row=3, column=0, sticky="e", pady=5, padx=10
+        )
+        tk.Entry(frame_informacion, textvariable=self.cant_grietas, width=6, bg="white", bd=3).grid(
+            row=3, column=1, sticky="w", pady=5, padx=10
+        )
+        
+        # Fila 3: Cant P.cocodr
+        tk.Label(frame_informacion, text="Cant P.cocodr:", bg="white", bd=3).grid(
+            row=4, column=0, sticky="e", pady=5, padx=10
+        )
+        tk.Entry(frame_informacion, textvariable=self.cant_Pcocodrilo, width=6, bg="white", bd=3).grid(
+            row=4, column=1, sticky="w", pady=5, padx=10
+        )
+        
+        tk.Label(frame_informacion, text="  ", bg="white", anchor="center").grid(
+            row=5, column=0, columnspan=2, pady=10, sticky="we"
+        )
+        
+        self.label_estado = tk.Label(
+            frame_informacion, textvariable=self.var_estado, fg="white", anchor="center", bg="Green", bd=3
+        )
+        self.label_estado.grid(row=7, column=0, columnspan=2, pady=2, sticky="we", padx=4)
+        
+        
 
 
         # Logos a la derecha
