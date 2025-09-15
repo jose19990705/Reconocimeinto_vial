@@ -23,7 +23,7 @@ def imflatfield(image, sigma=40):
 
 
 class PavementProcessor:
-    def __init__(self, model_path=r"C:\Users\jose1\OneDrive\Documentos\interfaz_grafica\best.pt"):
+    def __init__(self, model_path=r"C:\Users\jose1\OneDrive\Documentos\interfaz_mejoradas\best.pt"):
         self.model = YOLO(model_path)
 
     def procesar_video(self, video_path, output_path, inicio_min=0, fin_min=0, todo=True, callback=None):

@@ -14,34 +14,45 @@ class App:
         self.ruta_video = None
         self.ruta_salida = None
 
-        # Variables
+        # Atributos adicionales para el control 
         self.var_min_inicio = tk.StringVar(value="0")
         self.var_min_fin = tk.StringVar(value="0")
-        self.var_todo = tk.BooleanVar(value=True)
+        self.var_todo = tk.BooleanVar(value=False)
         self.var_estado = tk.StringVar(value="Listo")
 
         # Tamaño fijo del área de video
-        self.video_ancho = 400
-        self.video_alto = 225
-
+        #self.video_ancho = 400
+        #self.video_alto = 225
+        self.video_ancho = 600
+        self.video_alto = 300
+        
+        
         # Construcción interfaz
         self.crear_interfaz()
 
     def crear_interfaz(self):
         # --- Parte superior (video de inferencia) ---
-        frame_video = tk.Frame(self.root, bg="skyblue", bd=3, relief="groove")
-        frame_video.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=10, pady=10)
-
+        frame_video = tk.Frame(self.root, bg="Green", bd=10, relief="solid")
+        frame_video.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=20, pady=20)
         tk.Label(
-            frame_video,
-            text="Detección de irregularidad",
-            font=("Arial", 12, "bold"),
-            bg="skyblue",
-        ).pack(pady=5)
-
+        frame_video,
+        text="Detección de irregularidad",
+        font=("Georgi", 14, "bold"),  # Aumenta el tamaño de la fuente y usa negrita
+        fg="white", 
+        bg="#4CAF50", # Color de fondo del rectangulo en el que esta el label.
+        relief="solid",#Borde al rededor del label.
+        bd=2,  # Grosor del borde
+        padx=20,  
+        pady=10,  
+        width=30,  
+        height=2,  
+        anchor="center",  
+        justify="center" 
+        ).pack(pady=10)
+    
         # Contenedor fijo para el área de video
         contenedor_video = tk.Frame(
-            frame_video, width=self.video_ancho, height=self.video_alto, bg="white"
+            frame_video, width=self.video_ancho, height=self.video_alto, bg="white",bd=3,relief="solid"
         )
         contenedor_video.pack(padx=10, pady=10)
         contenedor_video.pack_propagate(False)
@@ -50,63 +61,75 @@ class App:
         self.label_inferencia.pack(fill=tk.BOTH, expand=True)
 
         # --- Parte inferior (controles + logos) ---
-        frame_inferior = tk.Frame(self.root)
+        frame_inferior = tk.Frame(self.root,bg="#4CAF50",padx=10, pady=10,bd=4,relief="solid")
         frame_inferior.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=10)
 
         # Controles a la izquierda
-        frame_controles = tk.Frame(frame_inferior)
-        frame_controles.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        frame_controles = tk.Frame(frame_inferior,bg="Green",bd=4,relief="solid")
+        frame_controles.pack(side=tk.LEFT, fill=tk.X, expand=True,padx=10,pady=2)
 
         btn_cargar = tk.Button(
-            frame_controles, text="Cargar video", width=15, command=self.cargar_video
+            frame_controles, text="Cargar video", width=15, command=self.cargar_video,bg="white",bd=3
         )
-        btn_cargar.grid(row=0, column=0, columnspan=2, pady=5)
+        btn_cargar.grid(row=0, column=2, columnspan=2, pady=5)
 
         btn_guardar = tk.Button(
-            frame_controles, text="Guardar salida", width=15, command=self.guardar_salida
+            frame_controles, text="Guardar salida", width=15, command=self.guardar_salida,bg="white",bd=3
         )
-        btn_guardar.grid(row=1, column=0, columnspan=2, pady=5)
-
-        tk.Label(frame_controles, text="Modelo: YOLOv8").grid(
-            row=2, column=0, columnspan=2, pady=5
-        )
-
-        tk.Label(frame_controles, text="Min inicio:").grid(row=3, column=0, sticky="e")
-        tk.Entry(frame_controles, textvariable=self.var_min_inicio, width=6).grid(
-            row=3, column=1, sticky="w"
+        btn_guardar.grid(row=1, column=2, columnspan=2, pady=5)
+        
+        
+        tk.Label(frame_controles, text="Min inicio:",bg="white",bd=3).grid(row=2, column=2, sticky="e",pady=2,)
+        tk.Entry(frame_controles, textvariable=self.var_min_inicio, width=6,bg="white",bd=3).grid(
+            row=2, column=3, sticky="w"
         )
 
-        tk.Label(frame_controles, text="Min fin:").grid(row=4, column=0, sticky="e")
-        tk.Entry(frame_controles, textvariable=self.var_min_fin, width=6).grid(
-            row=4, column=1, sticky="w"
+        tk.Label(frame_controles, text="Min fin:",bg="white",bd=3).grid(row=3, column=2, sticky="e",pady=2)
+        tk.Entry(frame_controles, textvariable=self.var_min_fin, width=6,bg="white",bd=3).grid(
+            row=3, column=3, sticky="w"
         )
 
         tk.Checkbutton(
-            frame_controles, text="Todo el video", variable=self.var_todo
-        ).grid(row=5, column=0, columnspan=2, pady=5)
+            frame_controles, text="Todo el video", variable=self.var_todo,bg="white",bd=3
+        ).grid(row=4, column=2, columnspan=2, pady=5)
 
         btn_iniciar = tk.Button(
-            frame_controles, text="Iniciar inferencia", width=18, command=self.iniciar
+            frame_controles, text="Iniciar inferencia", width=18, command=self.iniciar,bg="white",bd=3
         )
-        btn_iniciar.grid(row=6, column=0, columnspan=2, pady=10)
+        btn_iniciar.grid(row=5, column=2, columnspan=2, pady=2)
 
         self.label_estado = tk.Label(
-            frame_controles, textvariable=self.var_estado, fg="blue", anchor="center"
+            frame_controles, textvariable=self.var_estado, fg="blue", anchor="center",bg="Green",bd=3
         )
-        self.label_estado.grid(row=7, column=0, columnspan=2, pady=5, sticky="we")
+        self.label_estado.grid(row=6, column=2, columnspan=2, pady=2, sticky="we",padx=4)
 
         self.progress = ttk.Progressbar(
-            frame_controles, orient="horizontal", length=300, mode="determinate"
+            frame_controles, orient="horizontal", length=300, mode="determinate",
         )
-        self.progress.grid(row=8, column=0, columnspan=2, pady=10)
+        self.progress.grid(row=7, column=2, columnspan=2, pady=7,padx=4)
+        
+        #Informacion de conteo!!!
+        # Simplemente colocar los widgets en columnas más altas para moverlos a la derecha
+        tk.Label(frame_controles, text="sdasdad:", bg="white", bd=3).grid(
+            row=3, column=32, pady=2, sticky='e', padx=10  # Alineamos a la derecha en la columna 5
+        )
+        
+        tk.Entry(frame_controles, textvariable=self.var_min_fin, width=6, bg="white", bd=3).grid(
+            row=3, column=31, pady=2, sticky='e', padx=10  # Alineamos a la derecha en la columna 6
+        )
+
+
+
 
         # Logos a la derecha
         frame_logos = tk.Frame(frame_inferior)
         frame_logos.pack(side=tk.RIGHT, padx=10)
-
+       
+        
+        
         try:
-            img1 = Image.open(r"C:\Users\jose1\OneDrive\Documentos\interfaz_grafica\gepar.png")
-            img2 = Image.open(r"C:\Users\jose1\OneDrive\Documentos\interfaz_grafica\intertelco.png")
+            img1 = Image.open(r"C:\Users\jose1\OneDrive\Documentos\interfaz_mejoradas\gepar.png")
+            img2 = Image.open(r"C:\Users\jose1\OneDrive\Documentos\interfaz_mejoradas\intertelco.png")
 
             # Reducir al 25% del tamaño original
             w1, h1 = img1.size
@@ -209,3 +232,8 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = App(root)
     root.mainloop()
+
+
+
+
+
