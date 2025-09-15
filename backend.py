@@ -4,6 +4,9 @@ Backend para detección de irregularidades en pavimento
 Autor: Jose Henao Alzate
 """
 "Primera verisón."
+
+#Backend segunda versión
+
 import cv2
 import numpy as np
 from ultralytics import YOLO
