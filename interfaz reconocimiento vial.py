@@ -4,6 +4,8 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk
 import cv2
+import pandas as pd
+
 
 class App:
     def __init__(self, root):
@@ -214,11 +216,13 @@ class App:
                 self.var_estado.set(f" Video procesado en: {salida}")
                 messagebox.showinfo("Finalizado", f"Video procesado en:\n{salida}")
 
+                # Guardar los resultados en un archivo Excel al finalizar el procesamiento.
+                self.guardar_resultados_excel()
+
             self.root.after(0, finalizar)
 
         threading.Thread(target=worker, daemon=True).start()
 
-    
     def mostrar_frame(self, frame_inferido, porcentaje, counts):
         def _update():
             frame_rgb = cv2.cvtColor(frame_inferido, cv2.COLOR_BGR2RGB)
@@ -231,15 +235,40 @@ class App:
             self.progress["value"] = porcentaje
             self.var_estado.set(f"Progreso: {porcentaje:.1f}%")
 
-            # ✅ ACTUALIZAR CONTEOS
+            # Actualización de conteos de la imagen.
             self.cant_huecos.set(str(counts.get(0, 0)))       # Pothole
             self.cant_Pcocodrilo.set(str(counts.get(1, 0)))   # Cocodrile skin
             self.cant_grietas.set(str(counts.get(2, 0)))      # Crack
-        self.root.after(0, _update)  # Esto lo hace seguro
 
+        self.root.after(0, _update)
 
+    def guardar_resultados_excel(self):
+        # Crear el archivo de resultados en Excel
+        data = {
+            'Categoria': ['Potholes', 'Cocodrile skin', 'Cracks'],
+            'Cantidad': [
+                self.cant_huecos.get(),
+                self.cant_Pcocodrilo.get(),
+                self.cant_grietas.get(),
+            ]
+        }
+
+        df = pd.DataFrame(data)
+        try:
+            df.to_excel(self.ruta_salida.replace(".mp4", "_resultados.xlsx").replace(".avi", "_resultados.xlsx"),
+                        index=False)
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo guardar los resultados: {str(e)}")
+
+    def on_closing(self):
+        """Guardado cuando el usuario cierra la ventana manualmente."""
+        if self.ruta_salida:
+            self.guardar_resultados_excel()
+        self.root.destroy()
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = App(root)
+    root.protocol("WM_DELETE_WINDOW", app.on_closing)  # Guardar resultados al cerrar
     root.mainloop()
+
