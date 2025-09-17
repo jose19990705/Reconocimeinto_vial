@@ -1,4 +1,3 @@
-
 """
 Backend para detección de irregularidades en pavimento
 Autor: Jose Henao Alzate
@@ -36,7 +35,7 @@ class PavementProcessor:
         - output_path: ruta del video de salida
         - inicio_min, fin_min: intervalo de tiempo en minutos
         - todo: si True, procesa todo el video
-        - callback: función(frame_inferido, progreso)
+        - callback: función(frame_inferido, progreso, counts)
         """
         cap = cv2.VideoCapture(video_path)
         fps = int(cap.get(cv2.CAP_PROP_FPS))
@@ -61,6 +60,7 @@ class PavementProcessor:
         total_frames = max(1, fin - inicio)
         frame_count = 0
         ultimo_frame_inferido = None
+        counts = {0: 0, 1: 0, 2: 0}  # Inicial para callback en caso de que no infiera aún
 
         while cap.isOpened():
             ret, frame = cap.read()
@@ -73,17 +73,28 @@ class PavementProcessor:
             if frame_count % 20 == 0:
                 frame_proc = imflatfield(frame)
                 results = self.model(frame_proc)
-                ultimo_frame_inferido = results[0].plot()
+                result = results[0]
 
-            # Si hay resultado, se escribe en el video
-            if ultimo_frame_inferido is not None:
-                out.write(ultimo_frame_inferido)
+                # --- Contar clases ---
+                counts = {0: 0, 1: 0, 2: 0}  # Pothole, cocodrile skin, crack
+                if result.boxes is not None:
+                    for cls_id in result.boxes.cls:
+                        cls_int = int(cls_id)
+                        if cls_int in counts:
+                            counts[cls_int] += 1
+
+                # Dibujar resultados
+                ultimo_frame_inferido = result.plot()
 
                 # Actualizar interfaz
                 procesados += 1
                 progreso = (procesados / total_frames) * 100
                 if callback:
-                    callback(ultimo_frame_inferido, progreso)
+                    callback(ultimo_frame_inferido, progreso, counts)
+
+            # Si hay resultado, se escribe en el video
+            if ultimo_frame_inferido is not None:
+                out.write(ultimo_frame_inferido)
 
         cap.release()
         out.release()
