@@ -1,3 +1,31 @@
+'''
+-----------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------- Grupo de investigación GEPAR ---------------------------------------------------------
+------------------------------------------------------------- Universidad de Antioquia ---------------------------------------------------------
+------------------------------------------------------------- Medellín, Colombia --------------------------------------------------------------
+---------------------------------------------------------------- Septiembre, 2025 --------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------- Autor: * Jose Andres Henao Alzate --------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------
+--------- Proyecto: Detección de imperfecciones en pavimento utilizando técnicas de procesamiento digital de imágenes -------------------------
+--------- y aprendizaje automático. -----------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------
+--------- Descripción: ----------------------------------------------------------------------------------- ------------------------------------
+Este módulo implementa la interfaz gráfica de usuario (GUI) desarrollada en Tkinter para el software de 
+detección de imperfecciones en pavimento (grietas, piel de cocodrilo y baches). 
+
+La interfaz permite:
+    - Cargar videos.
+    - Seleccionar intervalos de análisis o procesar el video completo.
+    - Ejecutar el procesamiento mediante el backend con el modelo YOLOv8.
+    - Mostrar resultados de conteo en tiempo real de cada categoría.
+    - Guardar la salida procesada en un archivo de video.
+    - Visualizar logos del grupo de investigación.
+
+El backend genera un archivo Excel con los resultados detallados.
+-----------------------------------------------------------------------------------------------------------------------------------------------
+'''
+
 from backend import PavementProcessor
 import threading
 import tkinter as tk
@@ -8,7 +36,31 @@ import pandas as pd
 
 
 class App:
+    '''
+    Clase principal que gestiona la interfaz gráfica de usuario para la detección de imperfecciones 
+    en pavimento.
+
+    Atributos:
+        root (tk.Tk): Ventana principal de Tkinter.
+        ruta_video (str): Ruta al archivo de video cargado.
+        ruta_salida (str): Ruta al archivo de salida del video procesado.
+        var_min_inicio (tk.StringVar): Minuto de inicio del análisis.
+        var_min_fin (tk.StringVar): Minuto de finalización del análisis.
+        var_todo (tk.BooleanVar): Indica si se procesa todo el video.
+        var_estado (tk.StringVar): Estado actual de la aplicación.
+        video_ancho (int): Ancho del área de visualización de video.
+        video_alto (int): Alto del área de visualización de video.
+        cant_huecos (tk.StringVar): Conteo de baches detectados.
+        cant_grietas (tk.StringVar): Conteo de grietas detectadas.
+        cant_Pcocodrilo (tk.StringVar): Conteo de piel de cocodrilo detectada.
+    '''
     def __init__(self, root):
+        '''
+        Constructor de la clase App. Inicializa la ventana principal y configura variables de estado.
+        
+        Args:
+            root (tk.Tk): Objeto de la ventana principal de Tkinter.
+        '''
         self.root = root
         self.root.title("Reconocimiento de pavimento")
         self.root.geometry("1100x750")
@@ -34,6 +86,15 @@ class App:
         self.crear_interfaz()
 
     def crear_interfaz(self):
+        '''
+        Construye todos los elementos gráficos de la interfaz:
+            - Área de visualización del video.
+            - Botones de control (cargar, guardar, iniciar).
+            - Parámetros de tiempo de análisis.
+            - Barra de progreso.
+            - Área de conteo de resultados.
+            - Logos institucionales.
+        '''
         frame_video = tk.Frame(self.root, bg="Green", bd=10, relief="solid")
         frame_video.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=20, pady=20)
         tk.Label(
@@ -73,6 +134,7 @@ class App:
         frame_informacion = tk.Frame(frame_controles, bg="Green", bd=3, relief="solid")
         frame_informacion.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
+        # Botones principales
         btn_cargar = tk.Button(
             frame_botones, text="Cargar video", width=15, command=self.cargar_video, bg="white", bd=3
         )
@@ -83,6 +145,7 @@ class App:
         )
         btn_guardar.grid(row=1, column=3, columnspan=2, pady=5)
 
+        # Parámetros de tiempo
         tk.Label(frame_botones, text="Min inicio:", bg="white", bd=3).grid(row=2, column=3, sticky="e", pady=2)
         tk.Entry(frame_botones, textvariable=self.var_min_inicio, width=6, bg="white", bd=3).grid(
             row=2, column=4, sticky="w"
@@ -102,11 +165,13 @@ class App:
         )
         btn_iniciar.grid(row=5, column=3, columnspan=2, pady=2)
 
+        # Barra de progreso
         self.progress = ttk.Progressbar(
             frame_botones, orient="horizontal", length=300, mode="determinate",
         )
         self.progress.grid(row=7, column=3, columnspan=2, pady=2, padx=4)
 
+        # Panel de información de resultados
         frame_informacion.grid_columnconfigure(0, weight=1)
         frame_informacion.grid_columnconfigure(1, weight=1)
 
@@ -144,6 +209,7 @@ class App:
         )
         self.label_estado.grid(row=7, column=0, columnspan=2, pady=2, sticky="we", padx=4)
 
+        # Logos institucionales
         frame_logos = tk.Frame(frame_inferior)
         frame_logos.pack(side=tk.RIGHT, padx=10)
 
@@ -163,6 +229,10 @@ class App:
             print("Error cargando imágenes:", e)
 
     def cargar_video(self):
+        '''
+        Abre un cuadro de diálogo para seleccionar un archivo de video 
+        y actualiza la variable de estado.
+        '''
         ruta = filedialog.askopenfilename(
             title="Seleccionar video",
             filetypes=[("Archivos de video", "*.mp4 *.avi *.mov"), ("Todos los archivos", "*.*")]
@@ -174,6 +244,10 @@ class App:
             self.var_estado.set("No se seleccionó video")
 
     def guardar_salida(self):
+        '''
+        Abre un cuadro de diálogo para seleccionar la ruta de guardado 
+        del video procesado.
+        '''
         ruta = filedialog.asksaveasfilename(
             title="Guardar video procesado",
             defaultextension=".mp4",
@@ -186,6 +260,10 @@ class App:
             self.var_estado.set("No se seleccionó ruta de salida")
 
     def iniciar(self):
+        '''
+        Inicia el procesamiento del video cargado en un hilo separado.
+        Verifica parámetros de entrada, ejecuta el backend y muestra el progreso en la interfaz.
+        '''
         if not self.ruta_video:
             messagebox.showwarning("Aviso", "Primero carga un video.")
             return
@@ -224,6 +302,14 @@ class App:
         threading.Thread(target=worker, daemon=True).start()
 
     def mostrar_frame(self, frame_inferido, porcentaje, counts):
+        '''
+        Actualiza el área de video y las métricas de detección en la interfaz.
+
+        Args:
+            frame_inferido (ndarray): Frame del video procesado.
+            porcentaje (float): Progreso del procesamiento (%).
+            counts (dict): Conteo de objetos detectados por clase.
+        '''
         def _update():
             frame_rgb = cv2.cvtColor(frame_inferido, cv2.COLOR_BGR2RGB)
             img = Image.fromarray(frame_rgb)
@@ -235,40 +321,26 @@ class App:
             self.progress["value"] = porcentaje
             self.var_estado.set(f"Progreso: {porcentaje:.1f}%")
 
-            # Actualización de conteos de la imagen.
+            # Actualización de conteos
             self.cant_huecos.set(str(counts.get(0, 0)))       # Pothole
             self.cant_Pcocodrilo.set(str(counts.get(1, 0)))   # Cocodrile skin
             self.cant_grietas.set(str(counts.get(2, 0)))      # Crack
 
         self.root.after(0, _update)
 
-    def guardar_resultados_excel(self):
-        # Crear el archivo de resultados en Excel
-        data = {
-            'Categoria': ['Potholes', 'Cocodrile skin', 'Cracks'],
-            'Cantidad': [
-                self.cant_huecos.get(),
-                self.cant_Pcocodrilo.get(),
-                self.cant_grietas.get(),
-            ]
-        }
-
-        df = pd.DataFrame(data)
-        try:
-            df.to_excel(self.ruta_salida.replace(".mp4", "_resultados.xlsx").replace(".avi", "_resultados.xlsx"),
-                        index=False)
-        except Exception as e:
-            messagebox.showerror("Error", f"No se pudo guardar los resultados: {str(e)}")
-
     def on_closing(self):
-        """Guardado cuando el usuario cierra la ventana manualmente."""
-        if self.ruta_salida:
-            self.guardar_resultados_excel()
+        '''
+        Evento ejecutado cuando el usuario cierra la ventana manualmente.
+        '''
         self.root.destroy()
+
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = App(root)
     root.protocol("WM_DELETE_WINDOW", app.on_closing)  # Guardar resultados al cerrar
     root.mainloop()
+
+
+
 

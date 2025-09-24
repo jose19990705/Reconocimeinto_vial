@@ -1,3 +1,22 @@
+'''
+-----------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------- Grupo de investigación Gepar ---------------------------------------------------------
+----------------------------------------------------------- Universidad de Antioquia ----------------------------------------------------------
+------------------------------------------------------------- Medellín, Colombia --------------------------------------------------------------
+---------------------------------------------------------------- Septiembre, 2025 --------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------- Autor: Jose Andres Henao Alzate ------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------
+------------- Proyecto: Detección de imperfecciones en pavimento utilizando técnicas de procesamiento digital de imágenes y --------------------
+------------- aprendizaje automático -----------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------
+------------- Descripción: Este software permite detectar imperfecciones en pavimento (grietas, piel de cocodrilo y baches). ------------------
+------------- Realiza un conteo de las imperfecciones detectadas y las guarda en un archivo Excel junto con el minuto y segundo ----------------
+------------- en el que se presentan dentro de un video vial. Además, genera un video de salida con los resultados de inferencia. ----------------
+------------- El backend utiliza como base el modelo YOLOv8 para la detección de objetos. ------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------
+'''
+
 import os
 import pandas as pd
 import cv2
@@ -9,6 +28,17 @@ import atexit
 
 # --- Función de preprocesado ---
 def imflatfield(image, sigma=40):
+    '''
+    Aplica corrección de campo plano (flat-field correction) para mejorar la uniformidad de la iluminación
+    en la imagen, reduciendo la influencia de variaciones de fondo.
+
+    Parámetros:
+        image (np.ndarray): Imagen de entrada (BGR).
+        sigma (int): Parámetro de suavizado Gaussiano para estimar el fondo.
+
+    Retorna:
+        np.ndarray: Imagen corregida con valores en rango [0, 255].
+    '''
     if image.dtype != np.float32:
         image = img_as_float(image)
     corrected = np.zeros_like(image)
@@ -19,7 +49,25 @@ def imflatfield(image, sigma=40):
 
 
 class PavementProcessor:
+    '''
+    Clase para procesar videos de pavimento, detectar imperfecciones con YOLOv8
+    y guardar los resultados en un archivo Excel y un video de salida.
+
+    Atributos:
+        model (YOLO): Modelo cargado de YOLOv8.
+        resultados_inferencia (list): Lista que almacena resultados detectados (minuto, segundo, conteo).
+        ruta_excel (str): Ruta del archivo Excel donde se guardarán los resultados.
+        df_writer (pd.DataFrame): DataFrame que mantiene resultados acumulados en memoria.
+        excel_writer: Escritor de Excel (pandas) para exportar datos.
+    '''
+
     def __init__(self, model_path=r"C:\Users\jose1\OneDrive\Documentos\interfaz_mejoradas\best.pt"):
+        '''
+        Constructor de la clase PavementProcessor.
+
+        Parámetros:
+            model_path (str): Ruta al archivo del modelo YOLO entrenado.
+        '''
         self.model = YOLO(model_path)
         self.resultados_inferencia = []  # Mantener los resultados en memoria
         self.ruta_excel = os.path.join(os.getcwd(), "resultados_de_inferencia.xlsx")  # Usar el directorio actual
@@ -30,12 +78,18 @@ class PavementProcessor:
 
     def procesar_video(self, video_path, output_path, inicio_min=0, fin_min=0, todo=True, callback=None):
         """
-        Procesa un video con YOLOv8.
-        - video_path: ruta del video de entrada
-        - output_path: ruta del video de salida
-        - inicio_min, fin_min: intervalo de tiempo en minutos
-        - todo: si True, procesa todo el video
-        - callback: función(frame_inferido, progreso, counts)
+        Procesa un video con YOLOv8 y guarda los resultados en video y Excel.
+
+        Parámetros:
+            video_path (str): Ruta del video de entrada.
+            output_path (str): Ruta del video de salida con inferencias dibujadas.
+            inicio_min (int): Minuto de inicio de análisis.
+            fin_min (int): Minuto final de análisis.
+            todo (bool): Si True, procesa todo el video. Si False, procesa solo el intervalo.
+            callback (function): Función de retorno para actualizar interfaz (frame, progreso, conteos).
+
+        Retorna:
+            str: Ruta del video de salida generado.
         """
         cap = cv2.VideoCapture(video_path)
         fps = int(cap.get(cv2.CAP_PROP_FPS))
@@ -125,6 +179,11 @@ class PavementProcessor:
         """
         Escribe un nuevo resultado en el archivo Excel de manera eficiente,
         sin cerrar el archivo repetidamente.
+
+        Parámetros:
+            minuto (int): Minuto en el que ocurre la detección.
+            segundo (int): Segundo en el que ocurre la detección.
+            counts (dict): Diccionario con los conteos de cada clase detectada.
         """
         # Si el DataFrame no está inicializado, crearlo
         if self.df_writer is None:
@@ -149,6 +208,7 @@ class PavementProcessor:
     def iniciar_excel_writer(self):
         """
         Inicializa el archivo Excel si no existe y configura el escritor de pandas.
+        También crea el DataFrame inicial en memoria.
         """
         # Asegurarse de que el directorio de la ruta del archivo existe
         os.makedirs(os.path.dirname(self.ruta_excel), exist_ok=True)
@@ -163,8 +223,8 @@ class PavementProcessor:
 
     def guardar_resultados_excel(self):
         """
-        Guarda los resultados de la inferencia en el archivo Excel.
-        Si el archivo ya existe, agrega los datos debajo de los existentes.
+        Guarda los resultados acumulados en el archivo Excel.
+        Si el archivo ya existe, sobreescribe los datos con los nuevos resultados.
         """
         if not self.resultados_inferencia:
             return  # No hay resultados que guardar
