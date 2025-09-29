@@ -144,9 +144,8 @@ class PavementProcessor:
                 procesados += 1
                 progreso = (procesados / total_frames) * 100
                 if callback:
-                    callback(ultimo_frame_inferido, progreso, counts)
+                    callback(ultimo_frame_inferido, frame, progreso, counts)  # Pasar también el frame original
 
-                # Si hay resultado, agregarlo a la lista de resultados de inferencia
                 if sum(counts.values()) > 0:  # Solo guardar si hay alguna detección
                     tiempo_seg = int(cap.get(cv2.CAP_PROP_POS_MSEC) / 1000)
                     minuto = tiempo_seg // 60
@@ -231,3 +230,5 @@ class PavementProcessor:
 
         # Al finalizar, guardar los resultados en el archivo Excel
         self.df_writer.to_excel(self.ruta_excel, index=False)
+
+

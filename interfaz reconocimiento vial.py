@@ -32,7 +32,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk
 import cv2
-import pandas as pd
+#import pandas as pd
 
 
 class App:
@@ -62,7 +62,7 @@ class App:
             root (tk.Tk): Objeto de la ventana principal de Tkinter.
         '''
         self.root = root
-        self.root.title("Reconocimiento de pavimento")
+        self.root.title("CRACKFINDER 	Detección Inteligente de irregularidades en pavimento")
         self.root.geometry("1100x750")
         self.root.resizable(False, False)
         self.root.maxsize(1100, 750)
@@ -99,7 +99,7 @@ class App:
         frame_video.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=20, pady=20)
         tk.Label(
             frame_video,
-            text="Detección de irregularidad",
+            text="CRACKFINDER Detección Inteligente de irregularidades en pavimento",
             font=("Georgi", 14, "bold"),
             fg="white",
             bg="#4CAF50",
@@ -107,20 +107,39 @@ class App:
             bd=2,
             padx=20,
             pady=10,
-            width=30,
+            width=60,
             height=2,
             anchor="center",
             justify="center"
         ).pack(pady=10)
 
-        contenedor_video = tk.Frame(
+
+        
+        
+        contenedor_video_normal = tk.Frame(
+            frame_video, width=self.video_ancho-90, height=self.video_alto, bg="white", bd=3, relief="solid"
+        )
+        contenedor_video_normal.pack(side=tk.LEFT, padx=10, pady=10)
+        contenedor_video_normal.pack_propagate(False)
+        
+        self.label_imagen_normal = tk.Label(contenedor_video_normal, bg="white")
+        self.label_imagen_normal.pack(fill=tk.BOTH, expand=True)
+        
+        
+        contenedor_video_inferencia = tk.Frame(
             frame_video, width=self.video_ancho, height=self.video_alto, bg="white", bd=3, relief="solid"
         )
-        contenedor_video.pack(padx=10, pady=10)
-        contenedor_video.pack_propagate(False)
-
-        self.label_inferencia = tk.Label(contenedor_video, bg="white")
+        contenedor_video_inferencia.pack(side=tk.LEFT, padx=10, pady=10)
+        contenedor_video_inferencia.pack_propagate(False)
+        
+        self.label_inferencia = tk.Label(contenedor_video_inferencia, bg="white")
         self.label_inferencia.pack(fill=tk.BOTH, expand=True)
+        
+        
+                
+                        
+        
+        
 
         frame_inferior = tk.Frame(self.root, bg="#4CAF50", padx=10, pady=10, bd=4, relief="solid")
         frame_inferior.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=10)
@@ -300,33 +319,45 @@ class App:
             self.root.after(0, finalizar)
 
         threading.Thread(target=worker, daemon=True).start()
-
-    def mostrar_frame(self, frame_inferido, porcentaje, counts):
+    
+    def mostrar_frame(self, frame_inferido, frame_normal, porcentaje, counts):
         '''
         Actualiza el área de video y las métricas de detección en la interfaz.
-
+    
         Args:
             frame_inferido (ndarray): Frame del video procesado.
+            frame_normal (ndarray): Frame del video normal (sin inferencias).
             porcentaje (float): Progreso del procesamiento (%).
             counts (dict): Conteo de objetos detectados por clase.
         '''
         def _update():
-            frame_rgb = cv2.cvtColor(frame_inferido, cv2.COLOR_BGR2RGB)
-            img = Image.fromarray(frame_rgb)
-            img = img.resize((self.video_ancho, self.video_alto))
-            img_tk = ImageTk.PhotoImage(img)
-            self.label_inferencia.configure(image=img_tk)
-            self.label_inferencia.image = img_tk
-
+            # Mostrar el frame normal
+            frame_rgb_normal = cv2.cvtColor(frame_normal, cv2.COLOR_BGR2RGB)
+            img_normal = Image.fromarray(frame_rgb_normal)
+            img_normal = img_normal.resize((self.video_ancho, self.video_alto))
+            img_tk_normal = ImageTk.PhotoImage(img_normal)
+            self.label_imagen_normal.configure(image=img_tk_normal)
+            self.label_imagen_normal.image = img_tk_normal  # Asegúrate de mantener la referencia
+    
+            # Mostrar el frame inferido (con detecciones)
+            frame_rgb_inferido = cv2.cvtColor(frame_inferido, cv2.COLOR_BGR2RGB)
+            img_inferido = Image.fromarray(frame_rgb_inferido)
+            img_inferido = img_inferido.resize((self.video_ancho, self.video_alto))
+            img_tk_inferido = ImageTk.PhotoImage(img_inferido)
+            self.label_inferencia.configure(image=img_tk_inferido)
+            self.label_inferencia.image = img_tk_inferido  # Asegúrate de mantener la referencia
+    
+            # Actualización de progreso
             self.progress["value"] = porcentaje
             self.var_estado.set(f"Progreso: {porcentaje:.1f}%")
-
+    
             # Actualización de conteos
             self.cant_huecos.set(str(counts.get(0, 0)))       # Pothole
             self.cant_Pcocodrilo.set(str(counts.get(1, 0)))   # Cocodrile skin
             self.cant_grietas.set(str(counts.get(2, 0)))      # Crack
-
+    
         self.root.after(0, _update)
+    
 
     def on_closing(self):
         '''
@@ -340,6 +371,10 @@ if __name__ == "__main__":
     app = App(root)
     root.protocol("WM_DELETE_WINDOW", app.on_closing)  # Guardar resultados al cerrar
     root.mainloop()
+
+
+
+
 
 
 
